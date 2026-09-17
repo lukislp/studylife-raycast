@@ -6,9 +6,19 @@
   "icon": "icon.png",
   "author": "lukislp",
   "license": "AGPL-3.0-or-later",
-  "platforms": ["macOS"],
-  "categories": ["Productivity"],
-  "keywords": ["studylife", "pomodoro", "focus", "timer", "time tracking"],
+  "platforms": [
+    "macOS"
+  ],
+  "categories": [
+    "Productivity"
+  ],
+  "keywords": [
+    "studylife",
+    "pomodoro",
+    "focus",
+    "timer",
+    "time tracking"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/lukislp/studylife-raycast.git"
@@ -81,5 +91,6 @@
     "lint": "ray lint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
-  }
+  },
+  "version": "1.0.0"
 }
