@@ -1,0 +1,166 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# One queue entry per ref (or per PR number, so successive pushes to the same PR don't queue
+# behind each other) - mirrors the other studylife-* repos' pipelines.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  NODE_VERSION: "24"
+
+# Least-privilege default for GITHUB_TOKEN (CodeQL actions/missing-workflow-permissions):
+# jobs that need more declare it themselves.
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      # Self-heal a stale/corrupted actions/setup-node npm cache without paying the cost of a
+      # clean cache on every normal run - only retries with a forced clean if the first
+      # `npm ci` actually fails.
+      - run: npm ci || (npm cache clean --force && npm ci)
+      - run: npm run typecheck
+      - run: npm audit --audit-level=high
+
+  build:
+    needs: [lint]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci || (npm cache clean --force && npm ci)
+      - run: npm test
+      # No .vsix-equivalent artifact here: `ray build` just validates the extension is Store-
+      # ready (types, manifest, bundling) and exits. `ray publish` is inherently interactive
+      # (it needs the maintainer's own Raycast account) and must never run in CI, so there is
+      # nothing to upload afterwards - unlike studylife-vscode's ci.yml, this job produces no
+      # artifact.
+      - run: npx ray build
+
+  # ---------------------------------------------------------------------
+  # Version / release - push to main only (mirrors studylife-capture's ci.yml pattern).
+  # ---------------------------------------------------------------------
+  get-version:
+    needs: [build]
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    outputs:
+      next_version: ${{ steps.semrel.outputs.new_release_version }}
+      published: ${{ steps.semrel.outputs.new_release_published }}
+    steps:
+      # ref: main (branch tip), not the default github.sha (the push event's SHA) - a "[skip ci]"
+      # commit (e.g. a version-bump commit from a previous release, or another push) can land on
+      # main between this workflow's trigger and this job actually starting. If this checked out
+      # github.sha instead, semantic-release's "local branch is behind the remote" guard would
+      # then analyze that now-stale SHA and silently skip the release entirely - no error, just
+      # nothing published (seen live in sibling studylife-* repos). ref: main always resolves to
+      # whatever main points to right now, so this also covers the older "Re-run jobs" staleness
+      # gap (two PRs merged minutes apart left get-version stuck on the first push's SHA on
+      # re-run) that used to need a manual `git fetch && git checkout -B main origin/main` step
+      # after checkout - no longer needed once checkout itself targets the branch tip.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+      # Ruleset bypass for the release commit (2026-09-11 main-protection rollout): main is
+      # protected by a ruleset (pull request + green test stage) that the GitHub Actions app
+      # cannot be a bypass actor for on a personal repository, so semantic-release pushes over
+      # SSH as a write-enabled DEPLOY KEY instead, which can. No-op while the secret is unset -
+      # the push then goes through the GITHUB_TOKEN https remote exactly as before. Needed in
+      # get-version too: @semantic-release/git's verifyConditions runs `git push --dry-run`
+      # even in dry-run mode. Same mechanism as lukislp/studylife's ci-cd.yml.
+      - name: Push as the semantic-release deploy key (if configured)
+        uses: lukislp/ci-workflows/.github/actions/deploy-key-push@6359eceb62d0b73e016578fe970182a430aa0ba4 # v1.5.3
+        with:
+          deploy-key: ${{ secrets.SEMANTIC_RELEASE_DEPLOY_KEY }}
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci || (npm cache clean --force && npm ci)
+      - id: semrel
+        uses: lukislp/ci-workflows/.github/actions/semantic-release@6359eceb62d0b73e016578fe970182a430aa0ba4 # v1.5.3
+        with:
+          dry-run: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: No release needed for this push
+        if: steps.semrel.outputs.new_release_published != 'true'
+        run: |
+          echo "No releasable commits since the last tag (e.g. docs/ci/chore-only) - this is the expected, common case with Conventional Commits, not a failure." | tee -a "$GITHUB_STEP_SUMMARY"
+
+  semantic-release:
+    needs: [get-version]
+    if: github.event_name == 'push' && needs.get-version.outputs.published == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+      # Ruleset bypass for the release commit (2026-09-11 main-protection rollout): main is
+      # protected by a ruleset (pull request + green test stage) that the GitHub Actions app
+      # cannot be a bypass actor for on a personal repository, so semantic-release pushes over
+      # SSH as a write-enabled DEPLOY KEY instead, which can. No-op while the secret is unset -
+      # the push then goes through the GITHUB_TOKEN https remote exactly as before. Needed in
+      # get-version too: @semantic-release/git's verifyConditions runs `git push --dry-run`
+      # even in dry-run mode. Same mechanism as lukislp/studylife's ci-cd.yml.
+      - name: Push as the semantic-release deploy key (if configured)
+        uses: lukislp/ci-workflows/.github/actions/deploy-key-push@6359eceb62d0b73e016578fe970182a430aa0ba4 # v1.5.3
+        with:
+          deploy-key: ${{ secrets.SEMANTIC_RELEASE_DEPLOY_KEY }}
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci || (npm cache clean --force && npm ci)
+      - id: semrel
+        uses: lukislp/ci-workflows/.github/actions/semantic-release@6359eceb62d0b73e016578fe970182a430aa0ba4 # v1.5.3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+      - if: steps.semrel.outcome == 'failure'
+        name: "Diagnose before retrying (expected: an out-of-band push landed since checkout)"
+        run: |
+          git fetch origin main
+          BEFORE_SHA="$(git rev-parse HEAD)"
+          AFTER_SHA="$(git rev-parse origin/main)"
+          if [ "$BEFORE_SHA" != "$AFTER_SHA" ]; then
+            echo "origin/main moved since checkout ($BEFORE_SHA -> $AFTER_SHA) - this matches the out-of-band-push race this retry is designed for."
+          else
+            echo "::warning::origin/main did NOT move since checkout - this failure is likely NOT the expected out-of-band-push race. Retrying anyway, but check the semantic-release log above for the real cause before assuming this is just a race."
+          fi
+          git checkout -B main origin/main
+      - if: steps.semrel.outcome == 'failure'
+        id: semrel_retry
+        uses: lukislp/ci-workflows/.github/actions/semantic-release@6359eceb62d0b73e016578fe970182a430aa0ba4 # v1.5.3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      # Nothing to upload afterwards: unlike studylife-vscode there is no .vsix (or any other
+      # binary asset) to attach, sign or attest - this workflow only cuts the changelog/tag/
+      # GitHub Release itself, produced by the semantic-release action above.

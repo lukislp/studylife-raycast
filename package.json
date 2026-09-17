@@ -1,0 +1,85 @@
+{
+  "$schema": "https://www.raycast.com/schemas/extension.json",
+  "name": "studylife-raycast",
+  "title": "StudyLife",
+  "description": "Control your StudyLife focus timer from Raycast and the menu bar.",
+  "icon": "icon.png",
+  "author": "lukislp",
+  "license": "AGPL-3.0-or-later",
+  "platforms": ["macOS"],
+  "categories": ["Productivity"],
+  "keywords": ["studylife", "pomodoro", "focus", "timer", "time tracking"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lukislp/studylife-raycast.git"
+  },
+  "bugs": {
+    "url": "https://github.com/lukislp/studylife-raycast/issues"
+  },
+  "commands": [
+    {
+      "name": "connect",
+      "title": "Connect to StudyLife",
+      "description": "Browser login, stores this installation's API key",
+      "mode": "no-view"
+    },
+    {
+      "name": "disconnect",
+      "title": "Disconnect from StudyLife",
+      "description": "Forgets the local API key (revoke it on the server separately)",
+      "mode": "no-view"
+    },
+    {
+      "name": "timer-status",
+      "title": "Timer Status",
+      "description": "Current phase and countdown, with Start/Pause/Stop actions",
+      "mode": "view"
+    },
+    {
+      "name": "timer-status-menubar",
+      "title": "StudyLife Menu Bar",
+      "description": "Phase/countdown (or this week's hours when idle) in the menu bar",
+      "mode": "menu-bar",
+      "interval": "60s"
+    },
+    {
+      "name": "start-focus-timer",
+      "title": "Start Focus Timer",
+      "description": "Starts the shared focus timer immediately, without opening a view",
+      "mode": "no-view"
+    },
+    {
+      "name": "course-goals",
+      "title": "Course Goals",
+      "description": "Read-only list of open course goals with their countdowns",
+      "mode": "view"
+    }
+  ],
+  "preferences": [
+    {
+      "name": "instanceUrl",
+      "type": "textfield",
+      "title": "Instance URL",
+      "description": "Base URL of your StudyLife instance, e.g. https://studylife.example.com. The API key itself is never stored here - it lives in Raycast's local storage, obtained via the Connect command.",
+      "placeholder": "https://studylife.example.com",
+      "required": true
+    }
+  ],
+  "dependencies": {
+    "@raycast/api": "^2.4.1",
+    "@raycast/utils": "^2.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.5.1",
+    "@types/react": "^19.2.6",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.0"
+  },
+  "scripts": {
+    "build": "ray build",
+    "dev": "ray develop",
+    "lint": "ray lint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  }
+}
