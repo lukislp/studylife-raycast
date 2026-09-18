@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/lukislp/studylife-raycast/compare/v1.1.0...v1.2.0) (2026-09-18)
+
+
+### Features
+
+* v3 - focus mode picker, session topic, webhook management ([#2](https://github.com/lukislp/studylife-raycast/issues/2)) ([421ebf9](https://github.com/lukislp/studylife-raycast/commit/421ebf9f7a5ab6c09ae37c5ec043e5977b85cc80))
+
 # [1.1.0](https://github.com/lukislp/studylife-raycast/compare/v1.0.0...v1.1.0) (2026-09-18)
 
 
