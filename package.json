@@ -69,6 +69,24 @@
       "title": "Add Note",
       "description": "Quick note capture, optionally attached to a course",
       "mode": "view"
+    },
+    {
+      "name": "focus-mode",
+      "title": "Focus Mode",
+      "description": "Pick the built-in focus preset the next session should start with",
+      "mode": "view"
+    },
+    {
+      "name": "list-webhooks",
+      "title": "List Webhooks",
+      "description": "Registered webhook subscriptions, with a delete action per row",
+      "mode": "view"
+    },
+    {
+      "name": "add-webhook",
+      "title": "Add Webhook",
+      "description": "Registers a new webhook subscription for a target URL and event types",
+      "mode": "view"
     }
   ],
   "preferences": [

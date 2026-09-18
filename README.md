@@ -13,22 +13,52 @@ macOS menu bar - the launcher-native sibling of
 
 - **Start Focus Timer** - picks a course (open goals first, the full catalogue one click away) and
   starts the shared timer for it, or keeps the current course with "Start now". v1 was an instant
-  no-view action; the picker needed somewhere to render, so this command is a view now.
+  no-view action; the picker needed somewhere to render, so this command is a view now. Each course
+  also offers a "... with Topic..." action for the optional topic field (see below).
 - **Timer Status** - a list view: current phase and countdown, a "Start Focus Timer" action that
-  opens the same course picker, Pause/Stop, and today's and this week's hours, streak and the next
-  goal countdown.
+  opens the same course picker, a "Choose Focus Mode" action (only while stopped), Pause/Stop, and
+  today's and this week's hours, streak and the next goal countdown.
 - **StudyLife Menu Bar** - a menu-bar item mirroring studylife-vscode's status bar: the live
   countdown while a phase is running, today's hours while idle; the dropdown surfaces everything
   at a glance - today's and this week's hours, streak and the next course goal's countdown - and
   is deliberately not trimmed for length.
+- **Focus Mode** - picks the built-in focus preset (Pomodoro Classic, Flow State, ...) the next
+  session should start with. Remembered locally as the default for the next start, and - while the
+  timer is stopped - written through to the server immediately, so every other device sees the new
+  preset right away. Only offered while the timer is stopped, same as studylife-vscode's
+  `pickTimerMode`.
 - **Add Note** - a form for quick note capture: an optional title, the note content, and the same
   two-tier course picker as starting a session (but with no "only while stopped" rule - notes
   aren't time-attributed).
 - **Course Goals** - a read-only list of open course goals with their countdowns.
+- **List Webhooks** / **Add Webhook** - manage this installation's webhook subscriptions: a list
+  with target URL, event summary and created date (with a confirm-before-delete action per row),
+  and a form to register a new one against the event-type catalogue.
 - **Connect / Disconnect** - browser login and local sign-out.
 
 The timer is shared across every device: a session started here shows up in the web app, the tray
 app, studylife-vscode and Home Assistant alike, and vice versa.
+
+### Focus mode
+
+The timer's preset (25/5 Pomodoro, 52/17 Flow State, and seven others - see `timer.ts`'s
+`BUILT_IN_MODES`) is picked from **Focus Mode**, reachable from Raycast's root search or from
+Timer Status' "Choose Focus Mode" action. Only the nine built-ins are offered: modes with an id of
+100 or above are custom presets stored in the user's StudyLife settings, which this extension has
+no scope to read, so it can neither name nor time them - exactly the same limitation
+studylife-vscode's `pickTimerMode` documents. A mode can only be changed while the timer is
+stopped, since the running countdown is measured against the current preset's length.
+
+### Session topic
+
+Starting a session for a course offers a second action, "... with Topic..." (`Start with Topic...`
+in the course picker, `Select Course with Topic...` in the full catalogue), which opens a small
+form for an optional short description of what the session is for. It is sent as `Sessions.Create`'s
+`Topic` field when the run is booked on stop. This was already being populated with the course
+name whenever one was picked (see `sessionTopic.ts`) - an explicit topic now takes priority over
+that, and omitting it keeps exactly the previous course-name fallback, unchanged. The default
+"Start"/"Start for This Course" actions stay a single keystroke, with no extra screen, exactly as
+before.
 
 ### The course picker
 
@@ -77,7 +107,7 @@ once per instance through [studylife-developers](https://github.com/lukislp/stud
 | --- | --- |
 | Client ID | `studylife-raycast` |
 | Redirect URIs | `http://127.0.0.1:8795/callback`, `http://127.0.0.1:8796/callback`, `http://127.0.0.1:8797/callback`, `http://127.0.0.1:8798/callback` |
-| Scopes | `TimerState.Get`, `TimerState.Save`, `CourseGoals.GetAll`, `Courses.GetAll`, `Metrics.GetSummary`, `Sessions.Create`, `Sessions.GetHistory`, `Notes.Create` |
+| Scopes | `TimerState.Get`, `TimerState.Save`, `CourseGoals.GetAll`, `Courses.GetAll`, `Metrics.GetSummary`, `Sessions.Create`, `Sessions.GetHistory`, `Notes.Create`, `WebhooksProxy.List`, `WebhooksProxy.Create`, `WebhooksProxy.Delete` |
 
 New in v2: `Sessions.Create` (books a finished run as a session, see below), `Sessions.GetHistory`
 (sums today's hours, since `MetricsHoursDto` only ever carries week/month/total) and
@@ -85,6 +115,11 @@ New in v2: `Sessions.Create` (books a finished run as a session, see below), `Se
 Course Goals command's own uncapped, uncompleted-goals-included view; the course picker sources
 from `Metrics.GetSummary`'s `upcomingCourseGoals` instead (see above), so the two calls serve
 genuinely different purposes rather than duplicating one another.
+
+New in v3: `WebhooksProxy.List`, `WebhooksProxy.Create` and `WebhooksProxy.Delete` (List Webhooks
+and Add Webhook, proxied through `/api/webhooks` to the `studylife-webhooks` microservice). The
+focus-mode picker and the session topic field use scopes this extension already had
+(`TimerState.Get`/`Save`, `Sessions.Create`) - no new scope needed for either.
 
 All four redirect URIs are needed because the login flow validates `redirect_uri` by **exact**
 match, and the extension binds whichever of those four loopback ports is free. They deliberately
@@ -113,8 +148,11 @@ otherwise carry it to every Mac you use Raycast on.
 | Timer Status | view | Phase, countdown, Start/Pause/Stop, today's and this week's hours, streak |
 | StudyLife Menu Bar | menu-bar | Countdown (or today's hours when idle) in the menu bar |
 | Start Focus Timer | view | Picks a course (open goals, or the full catalogue) and starts the timer |
+| Focus Mode | view | Picks the built-in focus preset the next session should start with |
 | Add Note | view | Quick note capture, with the same two-tier course picker |
 | Course Goals | view | Read-only list of open course goals with their countdowns |
+| List Webhooks | view | Registered webhook subscriptions, with a delete action per row |
+| Add Webhook | view | Registers a new webhook subscription for a target URL and event types |
 
 ## Preferences
 
@@ -127,7 +165,11 @@ otherwise carry it to every Mac you use Raycast on.
 The extension talks to your instance and nowhere else. No telemetry, no third-party services. What
 leaves your Mac is: the poll for timer state, metrics and session history; timer transitions you
 trigger; the session this extension books when you stop a run it started; the course-goals list
-when you open that command; and the note you explicitly submit from Add Note.
+when you open that command; the note you explicitly submit from Add Note; the focus-mode pick you
+choose (and, once picked, the request that writes it through to the running timer); and the
+webhook registration you explicitly add or delete from List Webhooks/Add Webhook. This extension
+never talks to a webhook's target URL directly - that delivery is StudyLife's `studylife-webhooks`
+microservice's job, entirely server-side.
 
 ## Development
 
@@ -140,12 +182,14 @@ npx ray develop     # loads it into a local Raycast for manual testing
 ```
 
 The modules without Raycast dependencies (`oauth.ts`, `timer.ts`, `format.ts`, `courseGoals.ts`,
-`display.ts`, `api.ts`, `runLog.ts`, `berlinTime.ts`, `sessionHistory.ts`, `coursePicker.ts`) hold
-the rules that are easy to get subtly wrong, and those are what the tests cover - PKCE shape,
-constant-time state comparison, callback parsing, the timer transitions, the Europe/Berlin-
-anchored goal countdowns and wall-clock conversion (both directions, including a near-midnight
-UTC/CEST edge case), the run-becomes-a-session decision, today's-hours summation, the two-tier
-course-list filtering, and everything the timer card and menu bar display.
+`display.ts`, `api.ts`, `runLog.ts`, `berlinTime.ts`, `sessionHistory.ts`, `coursePicker.ts`,
+`sessionTopic.ts`, `webhooks.ts`) hold the rules that are easy to get subtly wrong, and those are
+what the tests cover - PKCE shape, constant-time state comparison, callback parsing, the timer
+transitions and focus-mode choices, the Europe/Berlin-anchored goal countdowns and wall-clock
+conversion (both directions, including a near-midnight UTC/CEST edge case), the run-becomes-a-
+session decision, the session-topic fallback rule, today's-hours summation, the two-tier
+course-list filtering, the webhook event catalogue and registration-list rendering, and everything
+the timer card and menu bar display.
 
 `runLog.ts` and `timerActions.ts` are worth reading before changing anything about session
 booking: the decision of whether stopping a run should write a session is intentionally isolated

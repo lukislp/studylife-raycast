@@ -6,9 +6,10 @@ import { usePromise } from "@raycast/utils";
 import type { Course } from "../api";
 import { getClient } from "../client";
 import { catalogCourses } from "../coursePicker";
+import StartSessionForm from "./StartSessionForm";
 
 interface CourseCatalogListProps {
-  onPick: (courseId: number, courseName: string) => void | Promise<void>;
+  onPick: (courseId: number, courseName: string, topic?: string) => void | Promise<void>;
 }
 
 export default function CourseCatalogList({ onPick }: CourseCatalogListProps) {
@@ -43,6 +44,16 @@ export default function CourseCatalogList({ onPick }: CourseCatalogListProps) {
                   await onPick(course.id, course.name);
                   pop();
                 }}
+              />
+              <Action.Push
+                title="Select Course with Topic..."
+                icon={Icon.Pencil}
+                target={
+                  <StartSessionForm
+                    courseName={course.name}
+                    onSubmit={(topic) => onPick(course.id, course.name, topic)}
+                  />
+                }
               />
             </ActionPanel>
           }

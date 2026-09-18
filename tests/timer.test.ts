@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  BUILT_IN_MODES,
   type TimerState,
+  canChangeMode,
   durationMinutes,
   formatCountdown,
+  modeChoices,
   modeName,
   phaseOf,
   progress,
@@ -127,6 +130,41 @@ describe("transitions", () => {
 
   it("always sends clientNow so the server can translate the deadline for other devices", () => {
     expect(transition(undefined, "start", { now: NOW }).clientNow).toBe(new Date(NOW).toISOString());
+  });
+});
+
+describe("modeChoices", () => {
+  it("lists all nine built-in presets with their focus/break detail", () => {
+    const choices = modeChoices(undefined);
+    expect(choices).toHaveLength(Object.keys(BUILT_IN_MODES).length);
+    const pomodoro = choices.find((c) => c.id === 1);
+    expect(pomodoro).toEqual({ id: 1, name: "Pomodoro Classic", detail: "25 min focus / 5 min break", current: false });
+  });
+
+  it("marks the currently active mode, and only that one", () => {
+    const choices = modeChoices(running({ timerModeId: 3 }));
+    expect(choices.find((c) => c.id === 3)?.current).toBe(true);
+    expect(choices.filter((c) => c.current)).toHaveLength(1);
+  });
+
+  it("marks none as current when the active mode is a custom one (id >= 100)", () => {
+    const choices = modeChoices(running({ timerModeId: 100 }));
+    expect(choices.some((c) => c.current)).toBe(false);
+  });
+
+  it("marks none as current when nothing is known yet", () => {
+    expect(modeChoices(undefined).some((c) => c.current)).toBe(false);
+  });
+});
+
+describe("canChangeMode", () => {
+  it("allows changing the mode while stopped", () => {
+    expect(canChangeMode(undefined)).toBe(true);
+    expect(canChangeMode({ isRunning: false })).toBe(true);
+  });
+
+  it("refuses while a phase is running - the countdown is measured against the current length", () => {
+    expect(canChangeMode(running())).toBe(false);
   });
 });
 

@@ -16,6 +16,9 @@
 export interface TimerRun {
   courseId: number;
   courseName?: string;
+  /** Optional user-entered topic for the session this run will become - see sessionTopic.ts for
+   *  how it combines with courseName when the run is booked. */
+  topic?: string;
   startedAt: number;
   /** The planned session the timer was attached to when it started, if any. */
   sessionId?: number | null;

@@ -8,6 +8,7 @@ import { berlinWallClockIso } from "./berlinTime";
 import { formatDuration } from "./format";
 import { type TimerRun, decide } from "./runLog";
 import { readRun, writeRun } from "./runStorage";
+import { buildSessionTopic } from "./sessionTopic";
 import { transition } from "./timer";
 
 /** Flow State (52/17) - the closest built-in preset to an uninterrupted focus block, and the
@@ -19,6 +20,10 @@ export interface TimerActionOptions {
    *  is not offered anywhere in this extension. */
   courseId?: number;
   courseName?: string;
+  /** Optional short user-entered description of what the session is for. Only meaningful on
+   *  "start" together with courseId - see sessionTopic.ts for how it is combined with courseName
+   *  once the run is booked on stop. */
+  topic?: string;
 }
 
 /**
@@ -45,6 +50,7 @@ export async function runTimerAction(
       startedAt: now,
       sessionId: current?.sessionId ?? null,
       ...(options.courseName === undefined ? {} : { courseName: options.courseName }),
+      ...(options.topic === undefined ? {} : { topic: options.topic }),
     };
     await writeRun(run);
   }
@@ -70,13 +76,14 @@ async function bookRun(client: StudyLifeApi, timerBeforeStop: TimerState | undef
 
   if (!decision.log) return;
 
+  const topic = buildSessionTopic(run?.courseName, run?.topic);
   const session: NewSession = {
     courseId: decision.courseId,
     startTime: berlinWallClockIso(decision.startedAt),
     endTime: berlinWallClockIso(decision.endedAt),
     timerModeId: timerBeforeStop?.timerModeId ?? DEFAULT_TIMER_MODE_ID,
     isCompleted: true,
-    ...(run?.courseName === undefined ? {} : { topic: run.courseName }),
+    ...(topic === undefined ? {} : { topic }),
   };
 
   try {

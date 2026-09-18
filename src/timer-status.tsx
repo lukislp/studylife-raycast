@@ -9,6 +9,7 @@ import { runTimerAction } from "./timerActions";
 import { summaryLines, timerCard } from "./display";
 import { useStudyLifeData } from "./hooks/useStudyLifeData";
 import CoursePickerList from "./components/CoursePickerList";
+import FocusMode from "./focus-mode";
 
 export default function TimerStatus() {
   const { data, isLoading, error, revalidate } = useStudyLifeData();
@@ -57,6 +58,9 @@ export default function TimerStatus() {
     <ActionPanel>
       {!card.running && (
         <Action.Push title="Start Focus Timer" icon={Icon.Play} target={<CoursePickerList />} />
+      )}
+      {!card.running && (
+        <Action.Push title="Choose Focus Mode" icon={Icon.Gear} target={<FocusMode />} />
       )}
       {card.running && card.phase === "Focus" && (
         <Action title="Pause Focus Timer" icon={Icon.Pause} onAction={() => run("pause")} />
