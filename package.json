@@ -48,20 +48,26 @@
     {
       "name": "timer-status-menubar",
       "title": "StudyLife Menu Bar",
-      "description": "Phase/countdown (or this week's hours when idle) in the menu bar",
+      "description": "Phase/countdown (or today's hours when idle) in the menu bar",
       "mode": "menu-bar",
       "interval": "60s"
     },
     {
       "name": "start-focus-timer",
       "title": "Start Focus Timer",
-      "description": "Starts the shared focus timer immediately, without opening a view",
-      "mode": "no-view"
+      "description": "Picks a course (open goals, or the full catalogue) and starts the shared focus timer",
+      "mode": "view"
     },
     {
       "name": "course-goals",
       "title": "Course Goals",
       "description": "Read-only list of open course goals with their countdowns",
+      "mode": "view"
+    },
+    {
+      "name": "add-note",
+      "title": "Add Note",
+      "description": "Quick note capture, optionally attached to a course",
       "mode": "view"
     }
   ],

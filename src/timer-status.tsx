@@ -1,23 +1,24 @@
-// View command: current phase + countdown, Start/Pause/Stop actions, and this week's hours and
-// streak from Metrics.GetSummary. Polls while the view is open (see useStudyLifeData).
+// View command: current phase + countdown, Start/Pause/Stop actions, and today's and this week's
+// hours, streak and the next goal from Metrics.GetSummary + Sessions.GetHistory. Polls while the
+// view is open (see useStudyLifeData). Stopping books whatever run was tracked into a session -
+// see timerActions.ts.
 import { useState } from "react";
 import { Action, ActionPanel, Icon, List, Toast, showToast } from "@raycast/api";
 import { getClient } from "./client";
-import { transition } from "./timer";
+import { runTimerAction } from "./timerActions";
 import { summaryLines, timerCard } from "./display";
 import { useStudyLifeData } from "./hooks/useStudyLifeData";
+import CoursePickerList from "./components/CoursePickerList";
 
 export default function TimerStatus() {
   const { data, isLoading, error, revalidate } = useStudyLifeData();
   const [busy, setBusy] = useState(false);
 
-  async function run(action: "start" | "pause" | "stop") {
+  async function run(action: "pause" | "stop") {
     setBusy(true);
     try {
       const client = await getClient();
-      const current = await client.getTimerState();
-      const next = transition(current, action, { now: Date.now() });
-      await client.saveTimerState(next);
+      await runTimerAction(client, action);
       await revalidate();
     } catch (err) {
       await showToast({
@@ -51,11 +52,11 @@ export default function TimerStatus() {
   }
 
   const card = timerCard(data?.timer, Date.now());
-  const lines = summaryLines(data?.metrics);
+  const lines = summaryLines(data?.metrics, data?.todayHours);
   const actions = (
     <ActionPanel>
       {!card.running && (
-        <Action title="Start Focus Timer" icon={Icon.Play} onAction={() => run("start")} />
+        <Action.Push title="Start Focus Timer" icon={Icon.Play} target={<CoursePickerList />} />
       )}
       {card.running && card.phase === "Focus" && (
         <Action title="Pause Focus Timer" icon={Icon.Pause} onAction={() => run("pause")} />
