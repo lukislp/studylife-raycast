@@ -91,4 +91,53 @@ describe("StudyLifeApi", () => {
       courseId: 3,
     });
   });
+
+  it("GETs the webhook registrations from /api/webhooks", async () => {
+    const registrations = [{ id: "1", target_url: "https://example.com/hook", events: ["timer.started"], created_at: "2026-09-18T00:00:00Z" }];
+    const fetchImpl = fakeFetch({ ok: true, status: 200, json: async () => registrations });
+    const api = new StudyLifeApi("https://studylife.example.com", "k", fetchImpl);
+    await expect(api.getWebhooks()).resolves.toEqual(registrations);
+    expect(fetchImpl).toHaveBeenCalledWith("https://studylife.example.com/api/webhooks", expect.anything());
+  });
+
+  it("POSTs a new webhook with a camelCase body, per this project's usual request convention", async () => {
+    const fetchImpl = fakeFetch({ ok: true, status: 200, json: async () => ({ id: "1" }) });
+    const api = new StudyLifeApi("https://studylife.example.com", "k", fetchImpl);
+    await api.createWebhook({ targetUrl: "https://example.com/hook", events: ["session.completed"] });
+    const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe("https://studylife.example.com/api/webhooks");
+    expect(init.method).toBe("POST");
+    expect(JSON.parse(init.body as string)).toEqual({
+      targetUrl: "https://example.com/hook",
+      events: ["session.completed"],
+    });
+  });
+
+  it("DELETEs a webhook by id, URL-encoded", async () => {
+    const fetchImpl = fakeFetch({ ok: true, status: 204 });
+    const api = new StudyLifeApi("https://studylife.example.com", "k", fetchImpl);
+    await api.deleteWebhook("abc/def");
+    expect(fetchImpl).toHaveBeenCalledWith(
+      "https://studylife.example.com/api/webhooks/abc%2Fdef",
+      expect.objectContaining({ method: "DELETE" }),
+    );
+  });
+
+  it("surfaces the server's `{ error: ... }` body verbatim on a non-2xx response", async () => {
+    const fetchImpl = fakeFetch({
+      ok: false,
+      status: 400,
+      json: async () => ({ error: "TargetUrl must be a public http(s) URL." }),
+    });
+    const api = new StudyLifeApi("https://studylife.example.com", "k", fetchImpl);
+    await expect(api.createWebhook({ targetUrl: "http://localhost/hook", events: [] })).rejects.toThrow(
+      /TargetUrl must be a public http\(s\) URL\./,
+    );
+  });
+
+  it("does not fail with a parsing error when a non-2xx response has no readable body", async () => {
+    const fetchImpl = fakeFetch({ ok: false, status: 500 });
+    const api = new StudyLifeApi("https://studylife.example.com", "k", fetchImpl);
+    await expect(api.getWebhooks()).rejects.toThrow(/failed \(500\)/);
+  });
 });

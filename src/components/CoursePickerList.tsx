@@ -17,6 +17,7 @@ import { goalCourses } from "../coursePicker";
 import { phaseOf } from "../timer";
 import { runTimerAction } from "../timerActions";
 import CourseCatalogList from "./CourseCatalogList";
+import StartSessionForm from "./StartSessionForm";
 
 export default function CoursePickerList() {
   const { data, isLoading, error, revalidate } = usePromise(async () => {
@@ -32,10 +33,14 @@ export default function CoursePickerList() {
     }
   }, []);
 
-  async function start(courseId?: number, courseName?: string) {
+  async function start(courseId?: number, courseName?: string, topic?: string) {
     try {
       const client = await getClient();
-      await runTimerAction(client, "start", courseId === undefined ? {} : { courseId, ...(courseName === undefined ? {} : { courseName }) });
+      await runTimerAction(client, "start", {
+        ...(courseId === undefined ? {} : { courseId }),
+        ...(courseName === undefined ? {} : { courseName }),
+        ...(topic === undefined ? {} : { topic }),
+      });
       await showToast({
         style: Toast.Style.Success,
         title: "Focus timer started",
@@ -113,6 +118,16 @@ export default function CoursePickerList() {
                     title="Start for This Course"
                     icon={Icon.Play}
                     onAction={() => start(g.courseId, g.courseName)}
+                  />
+                  <Action.Push
+                    title="Start with Topic..."
+                    icon={Icon.Pencil}
+                    target={
+                      <StartSessionForm
+                        courseName={g.courseName}
+                        onSubmit={(topic) => start(g.courseId, g.courseName, topic)}
+                      />
+                    }
                   />
                 </ActionPanel>
               }

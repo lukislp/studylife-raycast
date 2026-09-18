@@ -88,6 +88,26 @@ export interface NewNote {
   courseId?: number;
 }
 
+/** One registered webhook subscription, as returned by GET /api/webhooks. Mirrors
+ *  WebhookRegistrationDto (StudyLife.Shared/Dtos.cs) - unlike every other DTO this client reads,
+ *  that one describes studylife-webhooks' OWN response shape verbatim (ProxyAsync copies the
+ *  upstream body through byte-for-byte, never reparsed), so the field names below are that
+ *  service's snake_case, not this project's usual camelCase-on-the-wire convention. Not a typo. */
+export interface WebhookRegistration {
+  id: string;
+  target_url: string;
+  events: string[];
+  created_at: string;
+}
+
+/** The write shape for Webhooks.Create. Unlike WebhookRegistration above, this one IS bound
+ *  normally by CreateWebhookRequestDto (not proxied verbatim), so it follows this project's usual
+ *  camelCase-on-the-wire convention same as NewSession/NewNote. */
+export interface NewWebhook {
+  targetUrl: string;
+  events: string[];
+}
+
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -95,6 +115,19 @@ export class ApiError extends Error {
   ) {
     super(message);
     this.name = "ApiError";
+  }
+}
+
+/** Best-effort extraction of a server-sent `{ error: "..." }` body, e.g.
+ *  WebhooksProxyController.Create's 400 for a rejected TargetUrl. Never throws: a response with
+ *  no body, a non-JSON body, or a fake test double with no .json() at all all fall back to
+ *  undefined rather than masking the real failure with a parsing error. */
+async function readErrorMessage(response: Response): Promise<string | undefined> {
+  try {
+    const body = (await response.json()) as { error?: unknown };
+    return typeof body?.error === "string" ? body.error : undefined;
+  } catch {
+    return undefined;
   }
 }
 
@@ -121,7 +154,11 @@ export class StudyLifeApi {
         response.status === 403
           ? " - this installation was not granted that permission; reconnect and approve it"
           : "";
-      throw new ApiError(`${init?.method ?? "GET"} ${path} failed (${response.status})${hint}`, response.status);
+      const serverMessage = await readErrorMessage(response);
+      throw new ApiError(
+        `${init?.method ?? "GET"} ${path} failed (${response.status})${hint}${serverMessage ? `: ${serverMessage}` : ""}`,
+        response.status,
+      );
     }
     if (response.status === 204) return undefined as T;
     return (await response.json()) as T;
@@ -184,5 +221,25 @@ export class StudyLifeApi {
       method: "POST",
       body: JSON.stringify(note),
     });
+  }
+
+  /** This installation's webhook registrations. Requires WebhooksProxy.List. */
+  getWebhooks(): Promise<WebhookRegistration[]> {
+    return this.request<WebhookRegistration[]>("/api/webhooks");
+  }
+
+  /** Registers a new webhook subscription. The server rejects a non-public TargetUrl with a 400
+   *  carrying `{ error: "..." }` - readErrorMessage surfaces that text on the thrown ApiError.
+   *  Requires WebhooksProxy.Create. */
+  createWebhook(webhook: NewWebhook): Promise<WebhookRegistration> {
+    return this.request<WebhookRegistration>("/api/webhooks", {
+      method: "POST",
+      body: JSON.stringify(webhook),
+    });
+  }
+
+  /** Requires WebhooksProxy.Delete. */
+  deleteWebhook(id: string): Promise<void> {
+    return this.request<void>(`/api/webhooks/${encodeURIComponent(id)}`, { method: "DELETE" });
   }
 }
