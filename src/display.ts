@@ -23,24 +23,30 @@ export function timerCard(timer: TimerState | undefined, now: number): TimerCard
 }
 
 /**
- * The menu bar's title text: the live countdown while a phase is running, otherwise this week's
- * hours. Deliberately "this week", not "today" - MetricsHoursDto (the server's actual shape,
- * confirmed against StudyLife.Shared/Dtos.cs) carries week/month/total only, no daily figure.
- * studylife-vscode sums "today" from /api/sessions/history instead, which needs
- * Sessions.GetHistory - a scope this extension deliberately does not request (see README). The
- * tooltip spells out that the idle number is the week's total, the same way studylife-vscode's
- * status bar leaves the disambiguation to its tooltip rather than the label itself.
+ * The menu bar's title text: the live countdown while a phase is running, otherwise today's
+ * hours - matching studylife-vscode's status bar, which shows the same figure as its primary
+ * idle state. Falls back to this week's hours if today's could not be fetched (see
+ * useStudyLifeData's todayHours handling), and to "-" if neither is available.
  */
-export function menuBarTitle(timer: TimerState | undefined, weekHours: number | undefined, now: number): string {
+export function menuBarTitle(
+  timer: TimerState | undefined,
+  todayHoursValue: number | undefined,
+  weekHours: number | undefined,
+  now: number,
+): string {
   const card = timerCard(timer, now);
   if (card.running) return card.countdown ?? card.phase;
-  return formatHours(weekHours);
+  return formatHours(todayHoursValue ?? weekHours);
 }
 
-/** Dropdown/detail lines below the timer card: this week's hours, streak, next goal deadline -
- *  everything Metrics.GetSummary can honestly provide. */
-export function summaryLines(metrics: MetricsSummary | undefined): string[] {
+/** Dropdown/detail lines below the timer card: today's hours, this week's hours, streak, next
+ *  goal deadline - everything Metrics.GetSummary and Sessions.GetHistory can honestly provide.
+ *  `todayHoursValue` is omitted (not shown as "-") rather than shown as unknown, since a fetch
+ *  failure there should not read as "zero today". */
+export function summaryLines(metrics: MetricsSummary | undefined, todayHoursValue?: number): string[] {
   const lines: string[] = [];
+  if (todayHoursValue !== undefined) lines.push(`Today: ${formatHours(todayHoursValue)}`);
+
   const week = metrics?.hours?.week;
   if (week !== undefined) lines.push(`This week: ${formatHours(week)}`);
 

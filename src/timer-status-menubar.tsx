@@ -1,10 +1,12 @@
-// menu-bar command: mirrors studylife-vscode's status bar. Shows the phase/remaining time (or
-// this week's hours when idle - see display.ts for why "this week" rather than "today") in the
-// menu bar title; the dropdown offers Start/Pause/Stop and this week's hours, streak and the next
-// course goal's countdown.
+// menu-bar command: mirrors studylife-vscode's status bar. Shows today's hours (or the live
+// countdown while a phase is running) in the menu bar title; the dropdown surfaces everything at
+// a glance - today's and this week's hours, streak, and the next course goal's countdown, not
+// trimmed for length. Start here keeps the current course (no picker in the dropdown itself - use
+// "Timer Status" or "Start Focus Timer" to pick one); stopping still books whatever run was
+// tracked, the same as those two commands (see timerActions.ts).
 import { Icon, MenuBarExtra, Toast, showToast } from "@raycast/api";
 import { getClient } from "./client";
-import { transition } from "./timer";
+import { runTimerAction } from "./timerActions";
 import { menuBarTitle, summaryLines, timerCard } from "./display";
 import { useStudyLifeData } from "./hooks/useStudyLifeData";
 
@@ -20,9 +22,7 @@ export default function TimerStatusMenuBar() {
   async function run(action: "start" | "pause" | "stop") {
     try {
       const client = await getClient();
-      const current = await client.getTimerState();
-      const next = transition(current, action, { now: Date.now() });
-      await client.saveTimerState(next);
+      await runTimerAction(client, action);
       await revalidate();
     } catch (err) {
       await showToast({
@@ -43,8 +43,8 @@ export default function TimerStatusMenuBar() {
 
   const now = Date.now();
   const card = timerCard(data?.timer, now);
-  const title = menuBarTitle(data?.timer, data?.metrics?.hours?.week, now);
-  const lines = summaryLines(data?.metrics);
+  const title = menuBarTitle(data?.timer, data?.todayHours, data?.metrics?.hours?.week, now);
+  const lines = summaryLines(data?.metrics, data?.todayHours);
 
   return (
     <MenuBarExtra icon={phaseIcon(card.phase)} title={title} isLoading={isLoading} tooltip={`Focus timer: ${card.phase.toLowerCase()}`}>
@@ -56,7 +56,7 @@ export default function TimerStatusMenuBar() {
         {card.running && <MenuBarExtra.Item title="Stop" icon={Icon.Stop} onAction={() => run("stop")} />}
       </MenuBarExtra.Section>
       {lines.length > 0 && (
-        <MenuBarExtra.Section title="This week">
+        <MenuBarExtra.Section title="At a glance">
           {lines.map((line) => (
             <MenuBarExtra.Item key={line} title={line} />
           ))}

@@ -11,34 +11,54 @@ macOS menu bar - the launcher-native sibling of
 
 ## What it does
 
-- **Start Focus Timer** - a root-search quick action that starts the shared timer immediately,
-  no view opens.
-- **Timer Status** - a list view: current phase and countdown, Start/Pause/Stop actions, and this
-  week's hours and streak.
+- **Start Focus Timer** - picks a course (open goals first, the full catalogue one click away) and
+  starts the shared timer for it, or keeps the current course with "Start now". v1 was an instant
+  no-view action; the picker needed somewhere to render, so this command is a view now.
+- **Timer Status** - a list view: current phase and countdown, a "Start Focus Timer" action that
+  opens the same course picker, Pause/Stop, and today's and this week's hours, streak and the next
+  goal countdown.
 - **StudyLife Menu Bar** - a menu-bar item mirroring studylife-vscode's status bar: the live
-  countdown while a phase is running, this week's hours while idle; the dropdown adds
-  Start/Pause/Stop, this week's hours, streak and the next course goal's countdown.
+  countdown while a phase is running, today's hours while idle; the dropdown surfaces everything
+  at a glance - today's and this week's hours, streak and the next course goal's countdown - and
+  is deliberately not trimmed for length.
+- **Add Note** - a form for quick note capture: an optional title, the note content, and the same
+  two-tier course picker as starting a session (but with no "only while stopped" rule - notes
+  aren't time-attributed).
 - **Course Goals** - a read-only list of open course goals with their countdowns.
 - **Connect / Disconnect** - browser login and local sign-out.
 
 The timer is shared across every device: a session started here shows up in the web app, the tray
 app, studylife-vscode and Home Assistant alike, and vice versa.
 
-### What v1 deliberately leaves out
+### The course picker
 
-This extension requests a narrower set of scopes than studylife-vscode (see below) - no
-`Sessions.*`, so:
+Starting a session offers **which course** it is for: the courses you have an open, dated goal
+for (`Metrics.GetSummary`'s `upcomingCourseGoals`, the same small, already-sorted subset
+studylife-vscode's picker uses - not a separate `CourseGoals.GetAll` call), plus a "Browse all
+courses..." escape hatch to the full ~60-course catalogue (`Courses.GetAll`) for a course tracked
+without a deadline. The same two-tier source backs Add Note's course field.
 
-- There is **no "today's hours" figure** anywhere in this extension. StudyLife's metrics endpoint
-  (`MetricsHoursDto`) only ever carries week/month/total, never a daily number; studylife-vscode
-  sums "today" itself from `/api/sessions/history`, which needs `Sessions.GetHistory` - a scope
-  this extension does not request. Wherever studylife-vscode would show "today", this extension
-  shows this week's total instead, and never invents a number it cannot honestly back.
-- There is **no coding-time tracking or session logging** - that whole feature (watching editor
-  activity, offering to log it as a session) is specific to an editor and has no Raycast
-  equivalent.
-- There is **no course or mode picker on start** - Start Focus Timer keeps whatever course and
-  mode is already set. Changing either takes the web app for now.
+The picker is offered only while the timer is **stopped**. Changing the course of a session
+already under way would silently re-attribute time already spent, and that history feeds
+StudyLife's grade and ECTS correlations - the same rule studylife-vscode documents and enforces.
+Add Note carries no such rule: a note is not time-attributed, so its course field is free to
+change at any time.
+
+### The timer books its own time
+
+StudyLife's timer does not record anything by itself - the web app attaches it to a session the
+planner already created, and the timer state carries neither a course nor a start time. So when
+you start a session here (via the course picker) and nothing was planned for that slot, the
+extension remembers what it started and writes the session when you stop, for the course you
+picked - regardless of which command's Stop you use. If a planned session *was* attached, nothing
+is written: StudyLife is already accounting for that time, and a second row would double-count it.
+Runs under ten seconds are dropped as mis-clicks. Both cases stay silent by design - no toast, no
+error - since this is expected behaviour, not a failure to report.
+
+Every `DateTime` StudyLife's API sends or expects is naive **Europe/Berlin** local time - no
+offset, never UTC - regardless of what timezone the machine running Raycast is in. `berlinTime.ts`
+is the one place that conversion happens, in both directions, and everything that touches a
+session's start/end time or "today" goes through it.
 
 ## Requirements
 
@@ -57,7 +77,14 @@ once per instance through [studylife-developers](https://github.com/lukislp/stud
 | --- | --- |
 | Client ID | `studylife-raycast` |
 | Redirect URIs | `http://127.0.0.1:8795/callback`, `http://127.0.0.1:8796/callback`, `http://127.0.0.1:8797/callback`, `http://127.0.0.1:8798/callback` |
-| Scopes | `TimerState.Get`, `TimerState.Save`, `CourseGoals.GetAll`, `Courses.GetAll`, `Metrics.GetSummary` |
+| Scopes | `TimerState.Get`, `TimerState.Save`, `CourseGoals.GetAll`, `Courses.GetAll`, `Metrics.GetSummary`, `Sessions.Create`, `Sessions.GetHistory`, `Notes.Create` |
+
+New in v2: `Sessions.Create` (books a finished run as a session, see below), `Sessions.GetHistory`
+(sums today's hours, since `MetricsHoursDto` only ever carries week/month/total) and
+`Notes.Create` (the Add Note command). `CourseGoals.GetAll` stays - it is used only by the
+Course Goals command's own uncapped, uncompleted-goals-included view; the course picker sources
+from `Metrics.GetSummary`'s `upcomingCourseGoals` instead (see above), so the two calls serve
+genuinely different purposes rather than duplicating one another.
 
 All four redirect URIs are needed because the login flow validates `redirect_uri` by **exact**
 match, and the extension binds whichever of those four loopback ports is free. They deliberately
@@ -83,9 +110,10 @@ otherwise carry it to every Mac you use Raycast on.
 | --- | --- | --- |
 | Connect to StudyLife | no-view | Browser login, stores this installation's key |
 | Disconnect from StudyLife | no-view | Forgets the local key (revoke it on the server separately) |
-| Timer Status | view | Phase, countdown, Start/Pause/Stop, this week's hours and streak |
-| StudyLife Menu Bar | menu-bar | Countdown (or this week's hours when idle) in the menu bar |
-| Start Focus Timer | no-view | Starts the shared timer immediately, keeping the current course/mode |
+| Timer Status | view | Phase, countdown, Start/Pause/Stop, today's and this week's hours, streak |
+| StudyLife Menu Bar | menu-bar | Countdown (or today's hours when idle) in the menu bar |
+| Start Focus Timer | view | Picks a course (open goals, or the full catalogue) and starts the timer |
+| Add Note | view | Quick note capture, with the same two-tier course picker |
 | Course Goals | view | Read-only list of open course goals with their countdowns |
 
 ## Preferences
@@ -97,8 +125,9 @@ otherwise carry it to every Mac you use Raycast on.
 ## Privacy
 
 The extension talks to your instance and nowhere else. No telemetry, no third-party services. What
-leaves your Mac is: the poll for timer state and metrics, timer transitions you trigger, and the
-course-goals list when you open that command.
+leaves your Mac is: the poll for timer state, metrics and session history; timer transitions you
+trigger; the session this extension books when you stop a run it started; the course-goals list
+when you open that command; and the note you explicitly submit from Add Note.
 
 ## Development
 
@@ -111,9 +140,17 @@ npx ray develop     # loads it into a local Raycast for manual testing
 ```
 
 The modules without Raycast dependencies (`oauth.ts`, `timer.ts`, `format.ts`, `courseGoals.ts`,
-`display.ts`, `api.ts`) hold the rules that are easy to get subtly wrong, and those are what the
-tests cover - PKCE shape, constant-time state comparison, callback parsing, the timer transitions,
-the Europe/Berlin-anchored goal countdowns, and everything the timer card and menu bar display.
+`display.ts`, `api.ts`, `runLog.ts`, `berlinTime.ts`, `sessionHistory.ts`, `coursePicker.ts`) hold
+the rules that are easy to get subtly wrong, and those are what the tests cover - PKCE shape,
+constant-time state comparison, callback parsing, the timer transitions, the Europe/Berlin-
+anchored goal countdowns and wall-clock conversion (both directions, including a near-midnight
+UTC/CEST edge case), the run-becomes-a-session decision, today's-hours summation, the two-tier
+course-list filtering, and everything the timer card and menu bar display.
+
+`runLog.ts` and `timerActions.ts` are worth reading before changing anything about session
+booking: the decision of whether stopping a run should write a session is intentionally isolated
+from the Raycast-facing commands, so `timer-status.tsx`, `timer-status-menubar.tsx` and
+`start-focus-timer.tsx`'s course picker can never disagree on it.
 
 `timer.ts` is worth reading before changing anything about the timer: the wire shape has no
 "paused" flag, and the server accepts unknown JSON properties silently - so a wrong field name

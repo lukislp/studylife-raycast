@@ -32,19 +32,23 @@ describe("timerCard", () => {
 
 describe("menuBarTitle", () => {
   it("shows the live countdown while running", () => {
-    expect(menuBarTitle(running(), 12.5, NOW)).toBe("10:00");
+    expect(menuBarTitle(running(), 3, 12.5, NOW)).toBe("10:00");
   });
 
   it("falls back to the phase name if the deadline cannot be read while running", () => {
-    expect(menuBarTitle(running({ phaseEndsAt: null }), 12.5, NOW)).toBe("Focus");
+    expect(menuBarTitle(running({ phaseEndsAt: null }), 3, 12.5, NOW)).toBe("Focus");
   });
 
-  it("shows this week's hours when idle - never a 'today' figure the API cannot provide", () => {
-    expect(menuBarTitle(undefined, 12.5, NOW)).toBe("12 h 30 min");
+  it("shows today's hours when idle", () => {
+    expect(menuBarTitle(undefined, 2.5, 12.5, NOW)).toBe("2 h 30 min");
   });
 
-  it("shows a dash when idle and the week figure is unknown", () => {
-    expect(menuBarTitle(undefined, undefined, NOW)).toBe("-");
+  it("falls back to this week's hours when today's could not be fetched", () => {
+    expect(menuBarTitle(undefined, undefined, 12.5, NOW)).toBe("12 h 30 min");
+  });
+
+  it("shows a dash when idle and neither figure is available", () => {
+    expect(menuBarTitle(undefined, undefined, undefined, NOW)).toBe("-");
   });
 });
 
@@ -73,5 +77,13 @@ describe("summaryLines", () => {
 
   it("still shows a streak of zero - it is a fact, not a missing value", () => {
     expect(summaryLines({ streak: { current: 0 } })).toEqual(["Streak: 0 days"]);
+  });
+
+  it("puts today's hours first when it is available", () => {
+    expect(summaryLines({ hours: { week: 5 } }, 1.5)).toEqual(["Today: 1 h 30 min", "This week: 5 h 0 min"]);
+  });
+
+  it("omits today's hours entirely rather than showing it as unknown", () => {
+    expect(summaryLines({ hours: { week: 5 } })).toEqual(["This week: 5 h 0 min"]);
   });
 });
