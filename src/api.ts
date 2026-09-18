@@ -1,8 +1,7 @@
-// Typed client for exactly the five endpoints this extension is scoped for. Every method maps to
-// one entry the client requests at registration; adding a call here means adding the scope there
-// (and having it be publicly grantable server-side), never the other way round. Modelled on
-// studylife-vscode's api.ts, trimmed to this extension's five scopes (no Sessions.*, so no
-// session history and no session creation here - see README for what that costs).
+// Typed client for exactly the endpoints this extension is scoped for. Every method maps to one
+// entry the client requests at registration; adding a call here means adding the scope there (and
+// having it be publicly grantable server-side), never the other way round. Modelled on
+// studylife-vscode's api.ts.
 import { trimBase } from "./oauth";
 export type { TimerState } from "./timer";
 import type { TimerState } from "./timer";
@@ -36,12 +35,57 @@ export interface UpcomingGoal {
 
 export interface MetricsSummary {
   streak?: { current?: number };
-  /** The API has no "today" figure - only week, month and total (MetricsHoursDto). This
-   *  extension has no Sessions.GetHistory scope to sum one itself (unlike studylife-vscode),
-   *  so nothing here claims a "today" number - see README. */
+  /** The API has no "today" figure - only week, month and total (MetricsHoursDto). Today's
+   *  hours are summed from Sessions.GetHistory instead, see sessionHistory.ts. */
   hours?: { week?: number; month?: number; total?: number };
   upcomingCourseGoals?: UpcomingGoal[];
   [key: string]: unknown;
+}
+
+/** Mirrors the fields of StudySessionDto (StudyLife.Shared/Dtos.cs) this extension actually
+ *  reads/writes. StartTime/EndTime are naive Europe/Berlin wall-clock strings, never UTC and
+ *  never offset - see berlinTime.ts for both directions of that conversion. */
+export interface SessionRecord {
+  id?: number;
+  courseId?: number;
+  courseName?: string;
+  startTime?: string;
+  endTime?: string;
+  topic?: string;
+  isCompleted?: boolean;
+  [key: string]: unknown;
+}
+
+/** The write shape for Sessions.Create. startTime/endTime must already be naive Europe/Berlin
+ *  wall-clock strings (berlinWallClockIso), not UTC. */
+export interface NewSession {
+  courseId: number;
+  startTime: string;
+  endTime: string;
+  timerModeId: number;
+  topic?: string;
+  isCompleted: boolean;
+}
+
+/** Mirrors the fields of NoteDto this extension writes. Id/CreatedAt/UpdatedAt/Tags/Summary/
+ *  RelatedNoteIds are server-assigned and read-only from the client's point of view
+ *  (NotesController never accepts them from Create/Update), so NewNote below deliberately does
+ *  not carry them. */
+export interface Note {
+  id: number;
+  title: string;
+  content: string;
+  courseId?: number | null;
+  isMarkdown: boolean;
+  [key: string]: unknown;
+}
+
+/** The write shape for Notes.Create. */
+export interface NewNote {
+  title: string;
+  content: string;
+  isMarkdown: boolean;
+  courseId?: number;
 }
 
 export class ApiError extends Error {
@@ -99,16 +143,46 @@ export class StudyLifeApi {
     });
   }
 
+  /** The full course catalogue (~60 entries) - the picker's escape hatch for a course with no
+   *  open goal, see coursePicker.ts. */
   getCourses(): Promise<Course[]> {
     return this.request<Course[]>("/api/courses");
   }
 
-  /** All course goals, completed ones included - CourseGoalsController.GetAll has no filter. */
+  /** All course goals, completed ones included - CourseGoalsController.GetAll has no filter.
+   *  Deliberately kept separate from Metrics.GetSummary's upcomingCourseGoals (see coursePicker.ts
+   *  doc comment): this is the only place that needs the raw, uncapped list. */
   getCourseGoals(): Promise<CourseGoal[]> {
     return this.request<CourseGoal[]>("/api/coursegoals");
   }
 
   getMetricsSummary(): Promise<MetricsSummary> {
     return this.request<MetricsSummary>("/api/metrics/summary");
+  }
+
+  /**
+   * Sessions completed in the last `days` days, most recent history first-or-last as the server
+   * returns it - order is not relied on here. Used only to sum today's hours (sessionHistory.ts);
+   * two days requested (mirrors studylife-vscode) because the window is server-side and
+   * day-aligned, and a session that started yesterday but ends after midnight still needs to be
+   * seen to be clipped correctly.
+   */
+  getSessionHistory(days: number): Promise<SessionRecord[]> {
+    return this.request<SessionRecord[]>(`/api/sessions/history?days=${days}&onlyCompleted=true`);
+  }
+
+  /** Books a finished run as a session - see runLog.ts for when this extension calls it. */
+  createSession(session: NewSession): Promise<SessionRecord> {
+    return this.request<SessionRecord>("/api/sessions", {
+      method: "POST",
+      body: JSON.stringify(session),
+    });
+  }
+
+  createNote(note: NewNote): Promise<Note> {
+    return this.request<Note>("/api/notes", {
+      method: "POST",
+      body: JSON.stringify(note),
+    });
   }
 }

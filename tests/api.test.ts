@@ -44,4 +44,51 @@ describe("StudyLifeApi", () => {
     const api = new StudyLifeApi("https://studylife.example.com", "k", fetchImpl);
     await expect(api.saveTimerState({ isRunning: false })).resolves.toBeUndefined();
   });
+
+  it("requests session history with the days and onlyCompleted query params", async () => {
+    const fetchImpl = fakeFetch({ ok: true, status: 200, json: async () => [] });
+    const api = new StudyLifeApi("https://studylife.example.com", "k", fetchImpl);
+    await api.getSessionHistory(2);
+    expect(fetchImpl).toHaveBeenCalledWith(
+      "https://studylife.example.com/api/sessions/history?days=2&onlyCompleted=true",
+      expect.anything(),
+    );
+  });
+
+  it("POSTs a new session with the exact body given, unmodified", async () => {
+    const fetchImpl = fakeFetch({ ok: true, status: 200, json: async () => ({ id: 1 }) });
+    const api = new StudyLifeApi("https://studylife.example.com", "k", fetchImpl);
+    await api.createSession({
+      courseId: 7,
+      startTime: "2026-09-16T08:00:00",
+      endTime: "2026-09-16T09:00:00",
+      timerModeId: 2,
+      isCompleted: true,
+    });
+    const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe("https://studylife.example.com/api/sessions");
+    expect(init.method).toBe("POST");
+    expect(JSON.parse(init.body as string)).toEqual({
+      courseId: 7,
+      startTime: "2026-09-16T08:00:00",
+      endTime: "2026-09-16T09:00:00",
+      timerModeId: 2,
+      isCompleted: true,
+    });
+  });
+
+  it("POSTs a new note to /api/notes", async () => {
+    const fetchImpl = fakeFetch({ ok: true, status: 200, json: async () => ({ id: 1 }) });
+    const api = new StudyLifeApi("https://studylife.example.com", "k", fetchImpl);
+    await api.createNote({ title: "Title", content: "Content", isMarkdown: false, courseId: 3 });
+    const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe("https://studylife.example.com/api/notes");
+    expect(init.method).toBe("POST");
+    expect(JSON.parse(init.body as string)).toEqual({
+      title: "Title",
+      content: "Content",
+      isMarkdown: false,
+      courseId: 3,
+    });
+  });
 });
