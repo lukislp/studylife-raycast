@@ -1,3 +1,10 @@
+## [1.2.2](https://github.com/lukislp/studylife-raycast/compare/v1.2.1...v1.2.2) (2026-09-20)
+
+
+### Bug Fixes
+
+* **ci:** correct missing Harden Runner allowlist ports (github.com:22, crl:80) ([#8](https://github.com/lukislp/studylife-raycast/issues/8)) ([2d3b1bb](https://github.com/lukislp/studylife-raycast/commit/2d3b1bb04e65ac5da01336a7a3a4cef81cf9a57d))
+
 ## [1.2.1](https://github.com/lukislp/studylife-raycast/compare/v1.2.0...v1.2.1) (2026-09-20)
 
 
