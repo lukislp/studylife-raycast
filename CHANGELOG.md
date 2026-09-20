@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/lukislp/studylife-raycast/compare/v1.2.0...v1.2.1) (2026-09-20)
+
+
+### Bug Fixes
+
+* **ci:** add Harden Runner in audit mode to every job ([#6](https://github.com/lukislp/studylife-raycast/issues/6)) ([bdcbf48](https://github.com/lukislp/studylife-raycast/commit/bdcbf481b0fa67cf33ad2ec627f54386929c9562))
+
 # [1.2.0](https://github.com/lukislp/studylife-raycast/compare/v1.1.0...v1.2.0) (2026-09-18)
 
 
