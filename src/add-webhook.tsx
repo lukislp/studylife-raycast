@@ -72,7 +72,7 @@ export default function AddWebhook({ onCreated }: AddWebhookProps = {}) {
         id="targetUrl"
         title="Target URL"
         placeholder="https://example.com/webhook"
-        info="Must be a public http(s) URL - StudyLife rejects private/internal targets."
+        info="Must be a public http(s) URL - StudyAtrium rejects private/internal targets."
       />
       <Form.TagPicker id="events" title="Events">
         {WEBHOOK_EVENT_TYPES.map((eventType) => (

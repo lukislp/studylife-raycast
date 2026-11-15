@@ -8,6 +8,6 @@ export default async function Disconnect(): Promise<void> {
   await clearApiKey();
   await showToast({
     style: Toast.Style.Success,
-    title: hadKey ? "Disconnected from StudyLife" : "Already disconnected",
+    title: hadKey ? "Disconnected from StudyAtrium" : "Already disconnected",
   });
 }

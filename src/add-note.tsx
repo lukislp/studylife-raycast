@@ -62,7 +62,7 @@ export default function AddNote() {
   if (data && !data.connected) {
     return (
       <Form>
-        <Form.Description title="Not connected" text='Run "Connect to StudyLife" first.' />
+        <Form.Description title="Not connected" text='Run "Connect to StudyAtrium" first.' />
       </Form>
     );
   }

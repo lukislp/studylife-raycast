@@ -6,7 +6,7 @@ import { instanceUrl } from "./preferences";
 
 export class NotConnectedError extends Error {
   constructor() {
-    super('Not connected to StudyLife yet - run "Connect to StudyLife" first.');
+    super('Not connected to StudyAtrium yet - run "Connect to StudyAtrium" first.');
   }
 }
 

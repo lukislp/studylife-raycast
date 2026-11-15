@@ -35,8 +35,8 @@ export default function TimerStatusMenuBar() {
 
   if (!isLoading && data && !data.connected) {
     return (
-      <MenuBarExtra icon={Icon.Link} title="Not connected" tooltip="Run “Connect to StudyLife” first">
-        <MenuBarExtra.Item title="Not connected to StudyLife" />
+      <MenuBarExtra icon={Icon.Link} title="Not connected" tooltip="Run “Connect to StudyAtrium” first">
+        <MenuBarExtra.Item title="Not connected to StudyAtrium" />
       </MenuBarExtra>
     );
   }

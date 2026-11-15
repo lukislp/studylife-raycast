@@ -35,7 +35,7 @@ export default function TimerStatus() {
   if (error) {
     return (
       <List>
-        <List.EmptyView icon={Icon.Warning} title="Could not reach StudyLife" description={error.message} />
+        <List.EmptyView icon={Icon.Warning} title="Could not reach StudyAtrium" description={error.message} />
       </List>
     );
   }
@@ -46,7 +46,7 @@ export default function TimerStatus() {
         <List.EmptyView
           icon={Icon.Link}
           title="Not connected"
-          description='Run "Connect to StudyLife" first.'
+          description='Run "Connect to StudyAtrium" first.'
         />
       </List>
     );
