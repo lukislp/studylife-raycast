@@ -1,11 +1,13 @@
-# StudyLife for Raycast
+# StudyAtrium for Raycast
+
+(formerly StudyLife)
 
 [![CI](https://github.com/lukislp/studylife-raycast/actions/workflows/ci.yml/badge.svg)](https://github.com/lukislp/studylife-raycast/actions/workflows/ci.yml) [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/lukislp/studylife-raycast/badge)](https://scorecard.dev/viewer/?uri=github.com/lukislp/studylife-raycast) [![CodeQL](https://github.com/lukislp/studylife-raycast/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/lukislp/studylife-raycast/security/code-scanning)
 [![Release](https://img.shields.io/github/v/release/lukislp/studylife-raycast)](https://github.com/lukislp/studylife-raycast/releases)
 [![License: AGPL-3.0](https://img.shields.io/github/license/lukislp/studylife-raycast)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6)](https://www.typescriptlang.org/)
 
-Control your [StudyLife](https://github.com/lukislp/studylife) focus timer from Raycast and the
+Control your [StudyAtrium](https://github.com/lukislp/studylife) focus timer from Raycast and the
 macOS menu bar - the launcher-native sibling of
 [studylife-vscode](https://github.com/lukislp/studylife-vscode).
 
@@ -18,7 +20,7 @@ macOS menu bar - the launcher-native sibling of
 - **Timer Status** - a list view: current phase and countdown, a "Start Focus Timer" action that
   opens the same course picker, a "Choose Focus Mode" action (only while stopped), Pause/Stop, and
   today's and this week's hours, streak and the next goal countdown.
-- **StudyLife Menu Bar** - a menu-bar item mirroring studylife-vscode's status bar: the live
+- **StudyAtrium Menu Bar** - a menu-bar item mirroring studylife-vscode's status bar: the live
   countdown while a phase is running, today's hours while idle; the dropdown surfaces everything
   at a glance - today's and this week's hours, streak and the next course goal's countdown - and
   is deliberately not trimmed for length.
@@ -44,7 +46,7 @@ app, studylife-vscode and Home Assistant alike, and vice versa.
 The timer's preset (25/5 Pomodoro, 52/17 Flow State, and seven others - see `timer.ts`'s
 `BUILT_IN_MODES`) is picked from **Focus Mode**, reachable from Raycast's root search or from
 Timer Status' "Choose Focus Mode" action. Only the nine built-ins are offered: modes with an id of
-100 or above are custom presets stored in the user's StudyLife settings, which this extension has
+100 or above are custom presets stored in the user's StudyAtrium settings, which this extension has
 no scope to read, so it can neither name nor time them - exactly the same limitation
 studylife-vscode's `pickTimerMode` documents. A mode can only be changed while the timer is
 stopped, since the running countdown is measured against the current preset's length.
@@ -70,29 +72,29 @@ without a deadline. The same two-tier source backs Add Note's course field.
 
 The picker is offered only while the timer is **stopped**. Changing the course of a session
 already under way would silently re-attribute time already spent, and that history feeds
-StudyLife's grade and ECTS correlations - the same rule studylife-vscode documents and enforces.
+StudyAtrium's grade and ECTS correlations - the same rule studylife-vscode documents and enforces.
 Add Note carries no such rule: a note is not time-attributed, so its course field is free to
 change at any time.
 
 ### The timer books its own time
 
-StudyLife's timer does not record anything by itself - the web app attaches it to a session the
+StudyAtrium's timer does not record anything by itself - the web app attaches it to a session the
 planner already created, and the timer state carries neither a course nor a start time. So when
 you start a session here (via the course picker) and nothing was planned for that slot, the
 extension remembers what it started and writes the session when you stop, for the course you
 picked - regardless of which command's Stop you use. If a planned session *was* attached, nothing
-is written: StudyLife is already accounting for that time, and a second row would double-count it.
+is written: StudyAtrium is already accounting for that time, and a second row would double-count it.
 Runs under ten seconds are dropped as mis-clicks. Both cases stay silent by design - no toast, no
 error - since this is expected behaviour, not a failure to report.
 
-Every `DateTime` StudyLife's API sends or expects is naive **Europe/Berlin** local time - no
+Every `DateTime` StudyAtrium's API sends or expects is naive **Europe/Berlin** local time - no
 offset, never UTC - regardless of what timezone the machine running Raycast is in. `berlinTime.ts`
 is the one place that conversion happens, in both directions, and everything that touches a
 session's start/end time or "today" goes through it.
 
 ## Requirements
 
-- A self-hosted StudyLife instance you can reach from this Mac
+- A self-hosted StudyAtrium instance you can reach from this Mac
 - Raycast
 - The client registered once on your instance (see below)
 
@@ -133,7 +135,7 @@ Open this extension's preferences in Raycast and fill in your instance's base UR
 
 ### 3. Connect
 
-Run **Connect to StudyLife**. You are sent to your browser to approve the connection; the approval
+Run **Connect to StudyAtrium**. You are sent to your browser to approve the connection; the approval
 comes back through a one-time assertion which is redeemed for this installation's own API key.
 
 The key is stored in **Raycast's local storage**, never in preferences - preferences sync would
@@ -143,10 +145,10 @@ otherwise carry it to every Mac you use Raycast on.
 
 | Command | Mode | What it does |
 | --- | --- | --- |
-| Connect to StudyLife | no-view | Browser login, stores this installation's key |
-| Disconnect from StudyLife | no-view | Forgets the local key (revoke it on the server separately) |
+| Connect to StudyAtrium | no-view | Browser login, stores this installation's key |
+| Disconnect from StudyAtrium | no-view | Forgets the local key (revoke it on the server separately) |
 | Timer Status | view | Phase, countdown, Start/Pause/Stop, today's and this week's hours, streak |
-| StudyLife Menu Bar | menu-bar | Countdown (or today's hours when idle) in the menu bar |
+| StudyAtrium Menu Bar | menu-bar | Countdown (or today's hours when idle) in the menu bar |
 | Start Focus Timer | view | Picks a course (open goals, or the full catalogue) and starts the timer |
 | Focus Mode | view | Picks the built-in focus preset the next session should start with |
 | Add Note | view | Quick note capture, with the same two-tier course picker |
@@ -158,7 +160,7 @@ otherwise carry it to every Mac you use Raycast on.
 
 | Preference | Required | Meaning |
 | --- | --- | --- |
-| Instance URL | yes | Base URL of your StudyLife instance. The API key itself is never stored here. |
+| Instance URL | yes | Base URL of your StudyAtrium instance. The API key itself is never stored here. |
 
 ## Privacy
 
@@ -168,7 +170,7 @@ trigger; the session this extension books when you stop a run it started; the co
 when you open that command; the note you explicitly submit from Add Note; the focus-mode pick you
 choose (and, once picked, the request that writes it through to the running timer); and the
 webhook registration you explicitly add or delete from List Webhooks/Add Webhook. This extension
-never talks to a webhook's target URL directly - that delivery is StudyLife's `studylife-webhooks`
+never talks to a webhook's target URL directly - that delivery is StudyAtrium's `studylife-webhooks`
 microservice's job, entirely server-side.
 
 ## Development
@@ -203,7 +205,7 @@ produces a green build and a control that does nothing.
 ### Why no `OAuth.PKCEClient`
 
 Raycast ships a convenience `OAuth.PKCEClient` wrapper, but it expects a standard `?code=...`
-redirect. StudyLife's flow returns `?assertion=...&state=...` - a real shape mismatch, not just a
+redirect. StudyAtrium's flow returns `?assertion=...&state=...` - a real shape mismatch, not just a
 naming difference - so this extension ports studylife-vscode's raw loopback-HTTP-server approach
 directly (`auth.ts`) instead, storing the resulting key with `LocalStorage`.
 

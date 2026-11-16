@@ -23,7 +23,7 @@ export default function ListWebhooks() {
   async function handleDelete(id: string, targetUrl: string): Promise<void> {
     const confirmed = await confirmAlert({
       title: "Delete webhook?",
-      message: `StudyLife will stop notifying ${targetUrl}.`,
+      message: `StudyAtrium will stop notifying ${targetUrl}.`,
       primaryAction: { title: "Delete", style: Alert.ActionStyle.Destructive },
     });
     if (!confirmed) return;
@@ -44,7 +44,7 @@ export default function ListWebhooks() {
   if (error) {
     return (
       <List>
-        <List.EmptyView icon={Icon.Warning} title="Could not reach StudyLife" description={error.message} />
+        <List.EmptyView icon={Icon.Warning} title="Could not reach StudyAtrium" description={error.message} />
       </List>
     );
   }
@@ -52,7 +52,7 @@ export default function ListWebhooks() {
   if (!isLoading && data && !data.connected) {
     return (
       <List>
-        <List.EmptyView icon={Icon.Link} title="Not connected" description='Run "Connect to StudyLife" first.' />
+        <List.EmptyView icon={Icon.Link} title="Not connected" description='Run "Connect to StudyAtrium" first.' />
       </List>
     );
   }
@@ -68,7 +68,7 @@ export default function ListWebhooks() {
         <List.EmptyView
           icon={Icon.BellDisabled}
           title="No webhooks registered"
-          description="Add one to get notified when something happens in StudyLife."
+          description="Add one to get notified when something happens in StudyAtrium."
           actions={<ActionPanel>{addAction}</ActionPanel>}
         />
       ) : (

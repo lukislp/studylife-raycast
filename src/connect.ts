@@ -9,14 +9,14 @@ export default async function Connect(): Promise<void> {
     const url = instanceUrl();
     if (!url) {
       toast.style = Toast.Style.Failure;
-      toast.title = "Set the StudyLife instance URL first";
+      toast.title = "Set the StudyAtrium instance URL first";
       toast.message = "Open this extension's preferences and fill in the instance URL.";
       return;
     }
     const apiKey = await runLogin(url);
     await storeApiKey(apiKey);
     toast.style = Toast.Style.Success;
-    toast.title = "Connected to StudyLife";
+    toast.title = "Connected to StudyAtrium";
   } catch (error) {
     toast.style = Toast.Style.Failure;
     toast.title = "Connect failed";

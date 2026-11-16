@@ -1,4 +1,4 @@
-# Contributing to StudyLife for Raycast
+# Contributing to StudyAtrium for Raycast
 
 Thanks for taking the time. This is a small, single-maintainer extension, so the process is
 deliberately small - but it is the same for every change, including the maintainer's own.
@@ -26,7 +26,7 @@ deliberately small - but it is the same for every change, including the maintain
   a test is asked to add one.
 - **Typecheck and lint clean.** `npm run typecheck` and `npx ray lint` both run in CI; run them
   locally before pushing.
-- **Wire shapes checked against the server, not the docs.** StudyLife silently drops unknown JSON
+- **Wire shapes checked against the server, not the docs.** StudyAtrium silently drops unknown JSON
   properties, so a wrong field name produces a green build and a control that does nothing. If a
   change touches `api.ts`, `timer.ts` or `courseGoals.ts`, check the field names against the
   actual DTOs in the [`studylife`](https://github.com/lukislp/studylife) repo

@@ -20,7 +20,7 @@ export default function CourseGoals() {
   if (error) {
     return (
       <List>
-        <List.EmptyView icon={Icon.Warning} title="Could not reach StudyLife" description={error.message} />
+        <List.EmptyView icon={Icon.Warning} title="Could not reach StudyAtrium" description={error.message} />
       </List>
     );
   }
@@ -28,7 +28,7 @@ export default function CourseGoals() {
   if (!isLoading && data && !data.connected) {
     return (
       <List>
-        <List.EmptyView icon={Icon.Link} title="Not connected" description='Run "Connect to StudyLife" first.' />
+        <List.EmptyView icon={Icon.Link} title="Not connected" description='Run "Connect to StudyAtrium" first.' />
       </List>
     );
   }

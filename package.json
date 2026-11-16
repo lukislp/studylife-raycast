@@ -1,8 +1,8 @@
 {
   "$schema": "https://www.raycast.com/schemas/extension.json",
   "name": "studylife-raycast",
-  "title": "StudyLife",
-  "description": "Control your StudyLife focus timer from Raycast and the menu bar.",
+  "title": "StudyAtrium",
+  "description": "Control your StudyAtrium focus timer from Raycast and the menu bar.",
   "icon": "icon.png",
   "author": "lukislp",
   "license": "AGPL-3.0-or-later",
@@ -29,13 +29,13 @@
   "commands": [
     {
       "name": "connect",
-      "title": "Connect to StudyLife",
+      "title": "Connect to StudyAtrium",
       "description": "Browser login, stores this installation's API key",
       "mode": "no-view"
     },
     {
       "name": "disconnect",
-      "title": "Disconnect from StudyLife",
+      "title": "Disconnect from StudyAtrium",
       "description": "Forgets the local API key (revoke it on the server separately)",
       "mode": "no-view"
     },
@@ -47,7 +47,7 @@
     },
     {
       "name": "timer-status-menubar",
-      "title": "StudyLife Menu Bar",
+      "title": "StudyAtrium Menu Bar",
       "description": "Phase/countdown (or today's hours when idle) in the menu bar",
       "mode": "menu-bar",
       "interval": "60s"
@@ -94,7 +94,7 @@
       "name": "instanceUrl",
       "type": "textfield",
       "title": "Instance URL",
-      "description": "Base URL of your StudyLife instance, e.g. https://studylife.example.com. The API key itself is never stored here - it lives in Raycast's local storage, obtained via the Connect command.",
+      "description": "Base URL of your StudyAtrium instance, e.g. https://studylife.example.com. The API key itself is never stored here - it lives in Raycast's local storage, obtained via the Connect command.",
       "placeholder": "https://studylife.example.com",
       "required": true
     }
