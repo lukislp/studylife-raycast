@@ -5,7 +5,7 @@ describe("berlinWallClockIso", () => {
   it("converts a UTC instant to its Europe/Berlin wall-clock during CEST (UTC+2)", () => {
     // 2026-09-16T22:30:00Z is already past midnight in Berlin during September's daylight
     // saving (CEST, UTC+2) - a naive toISOString() would report 22:30 on the 16th, one day and
-    // two hours off from what StudyLife's server actually means.
+    // two hours off from what StudyAtrium's server actually means.
     const ms = Date.parse("2026-09-16T22:30:00.000Z");
     expect(berlinWallClockIso(ms)).toBe("2026-09-17T00:30:00");
   });

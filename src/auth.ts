@@ -4,7 +4,7 @@
 // through that, studylife-cli's login.py).
 //
 // Raycast ships a convenience OAuth.PKCEClient wrapper, but it expects a standard `?code=...`
-// redirect - StudyLife's flow returns `?assertion=...&state=...`, a real shape mismatch. So this
+// redirect - StudyAtrium's flow returns `?assertion=...&state=...`, a real shape mismatch. So this
 // ports vscode's raw loopback-HTTP-server approach directly instead: Raycast's Node runtime
 // permits binding local ports via node:http exactly like any other Node process.
 import { createServer, type Server } from "node:http";

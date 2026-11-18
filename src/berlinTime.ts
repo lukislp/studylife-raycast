@@ -1,6 +1,6 @@
 // Europe/Berlin wall-clock <-> UTC-instant conversion.
 //
-// StudyLife's server is naive-local Europe/Berlin: every DateTime it sends or expects carries no
+// StudyAtrium's server is naive-local Europe/Berlin: every DateTime it sends or expects carries no
 // offset in JSON and means Berlin wall-clock, regardless of what timezone the machine running
 // this extension happens to be in. `new Date(ms).toISOString()` is UTC, and a plain
 // `new Date(...)` local-getter dance silently uses whatever zone Raycast is running in - both are
@@ -50,7 +50,7 @@ function pad(n: number): string {
 }
 
 /**
- * The UTC instant's Europe/Berlin wall-clock, formatted the way StudyLife's naive DateTimes are -
+ * The UTC instant's Europe/Berlin wall-clock, formatted the way StudyAtrium's naive DateTimes are -
  * "2026-09-16T23:47:00", no offset, no "Z". This is what StartTime/EndTime for Sessions.Create
  * must be built from.
  */
@@ -70,7 +70,7 @@ function offsetMinutesAt(ms: number): number {
 
 /**
  * The UTC instant a naive Europe/Berlin wall-clock string denotes ("2026-09-16T23:47:00") - the
- * inverse of berlinWallClockIso, needed to make sense of the naive StartTime/EndTime StudyLife's
+ * inverse of berlinWallClockIso, needed to make sense of the naive StartTime/EndTime StudyAtrium's
  * own API returns (e.g. from Sessions.GetHistory) as real instants for overlap arithmetic.
  *
  * Works by reading the string's numbers as if they were UTC, then correcting by Berlin's offset

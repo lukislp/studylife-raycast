@@ -63,7 +63,7 @@ export async function runTimerAction(
 }
 
 /**
- * Turns a finished run into a study session, unless StudyLife was already accounting for it.
+ * Turns a finished run into a study session, unless StudyAtrium was already accounting for it.
  * See runLog.ts for why this is the extension's job at all.
  *
  * Below the minimum length, or when a planned session was already attached, this stays silent by

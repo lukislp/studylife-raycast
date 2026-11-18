@@ -5,7 +5,7 @@
 // ever carries week/month/total, never a daily figure, so today's hours are summed here from
 // Sessions.GetHistory instead. Unlike vscode's version, the day boundary and the sessions'
 // start/end times are both read through berlinTime.ts rather than the machine's own local
-// timezone or a bare Date.parse - StudyLife's StartTime/EndTime are naive Europe/Berlin
+// timezone or a bare Date.parse - StudyAtrium's StartTime/EndTime are naive Europe/Berlin
 // wall-clock, so "today" has to mean the Berlin calendar day, not whatever zone Raycast happens
 // to be running in.
 import type { SessionRecord } from "./api";
