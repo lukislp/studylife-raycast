@@ -11,7 +11,7 @@ export function formatDuration(ms: number): string {
 }
 
 /**
- * Hours as StudyLife reports them (a decimal) rendered the same way. Kept separate from
+ * Hours as StudyAtrium reports them (a decimal) rendered the same way. Kept separate from
  * formatDuration so a change to one cannot silently reformat the other.
  */
 export function formatHours(hours: number | undefined): string {

@@ -1,14 +1,14 @@
 // Deciding whether a finished timer run should become a study session.
 //
 // Ported verbatim in shape from studylife-vscode's runLog.ts - the reasoning is not editor-
-// specific at all. Why this is needed at all: StudyLife's timer does not record time. The web app
+// specific at all. Why this is needed at all: StudyAtrium's timer does not record time. The web app
 // attaches it to a session the planner already created, and the timer state itself carries
 // neither a course nor a start time - TimerState (timer.ts) has sessionId, isRunning, isBreak,
 // currentRound, timerModeId and phaseEndsAt, and nothing else. So a session started from this
 // extension, with nothing planned for that slot, would otherwise run its course and book nothing.
 //
 // The extension therefore remembers what it started (see runStorage.ts), and on stop turns it
-// into a session - unless a planned one was already attached, in which case StudyLife is already
+// into a session - unless a planned one was already attached, in which case StudyAtrium is already
 // accounting for the time and a second row would double-count it.
 
 /** What the extension recorded when it started a run. Persisted in Raycast's LocalStorage,
@@ -38,7 +38,7 @@ export type Decision =
 /**
  * Whether stopping now should create a session.
  *
- * `plannedSessionId` is the sessionId on the timer state as it stood at the stop - if StudyLife
+ * `plannedSessionId` is the sessionId on the timer state as it stood at the stop - if StudyAtrium
  * had a planned session attached, it is already accounting for this time.
  */
 export function decide(

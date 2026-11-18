@@ -1,7 +1,7 @@
 // The courses worth offering when starting a session or attaching a note, as plain data - no
 // Raycast APIs here, so the two-tier filtering is testable on its own.
 //
-// Mirrors studylife-vscode's panelModel.ts activeGoals(): StudyLife has no "active" flag on a
+// Mirrors studylife-vscode's panelModel.ts activeGoals(): StudyAtrium has no "active" flag on a
 // course - the built-in catalogue alone carries around sixty, and offering all of them is the
 // wall of names this replaces. What it does have is course goals, and the server already computes
 // exactly the useful subset: Metrics.GetSummary's upcomingCourseGoals is filtered to goals with a

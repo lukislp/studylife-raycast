@@ -5,7 +5,7 @@
 // two entry points can never drift on what the picker offers.
 //
 // Only ever rendered while the timer is stopped - changing the course of a session already under
-// way would silently re-attribute time already spent, and that history feeds StudyLife's grade
+// way would silently re-attribute time already spent, and that history feeds StudyAtrium's grade
 // and ECTS correlations. Callers should not even offer the action while running; this component
 // also refuses on its own, as a second line of defence for whichever entry point it is reached
 // from.

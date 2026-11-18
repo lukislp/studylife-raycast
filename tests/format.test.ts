@@ -14,7 +14,7 @@ describe("formatDuration", () => {
 });
 
 describe("formatHours", () => {
-  it("renders StudyLife's decimal hours through the same duration formatting", () => {
+  it("renders StudyAtrium's decimal hours through the same duration formatting", () => {
     expect(formatHours(2.5)).toBe("2 h 30 min");
     expect(formatHours(0)).toBe("0 min");
   });

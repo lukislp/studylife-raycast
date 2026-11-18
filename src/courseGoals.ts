@@ -19,8 +19,8 @@ export interface GoalRow {
 }
 
 /**
- * Days between a naive-local StudyLife date-time and "today", both anchored to calendar dates
- * (not wall-clock instants). StudyLife's DateTimes carry no offset and are naive Europe/Berlin
+ * Days between a naive-local StudyAtrium date-time and "today", both anchored to calendar dates
+ * (not wall-clock instants). StudyAtrium's DateTimes carry no offset and are naive Europe/Berlin
  * local time (see the server's AsOf doc comment on MetricsSummaryDto), so the target's calendar
  * date is read straight off its YYYY-MM-DD prefix - no reinterpretation needed, a target date is
  * a calendar date, not an instant. "Today" is different: `now` is a real instant (Date.now()),
