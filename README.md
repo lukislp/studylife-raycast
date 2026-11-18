@@ -173,6 +173,8 @@ webhook registration you explicitly add or delete from List Webhooks/Add Webhook
 never talks to a webhook's target URL directly - that delivery is StudyAtrium's `studylife-webhooks`
 microservice's job, entirely server-side.
 
+The full statement of what is stored, where it goes and how to remove it is in [PRIVACY.md](PRIVACY.md).
+
 ## Development
 
 ```bash
